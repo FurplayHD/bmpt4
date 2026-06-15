@@ -1,0 +1,59 @@
+﻿<Window x:Class="bmpt3.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:bmpt3"
+        mc:Ignorable="d"
+         Title="MainWindow" Height="550" Width="400">
+    <StackPanel Margin="20">
+
+        <TextBlock Text="Авторизация"
+               FontSize="24"
+               FontWeight="Bold"
+               HorizontalAlignment="Center"
+               Margin="0,0,0,20"/>
+
+        <TextBlock Text="Логин"/>
+        <TextBox x:Name="LoginTextBox"
+             Height="30"
+             Margin="0,0,0,10"/>
+
+        <TextBlock Text="Пароль"/>
+        <PasswordBox x:Name="PasswordBox"
+                 Height="30"
+                 Margin="0,0,0,15"/>
+
+        <TextBlock Text="Соберите картинку"
+               HorizontalAlignment="Center"
+               Margin="0,0,0,5"/>
+
+        <UniformGrid Rows="2"
+                 Columns="2"
+                 Width="180"
+                 Height="180"
+                 HorizontalAlignment="Center"
+                 Margin="0,0,0,15">
+
+            <Button x:Name="CaptchaButton1"
+                Click="CaptchaButton_Click"/>
+
+            <Button x:Name="CaptchaButton2"
+                Click="CaptchaButton_Click"/>
+
+            <Button x:Name="CaptchaButton3"
+                Click="CaptchaButton_Click"/>
+
+            <Button x:Name="CaptchaButton4"
+                Click="CaptchaButton_Click"/>
+
+        </UniformGrid>
+
+        <Button Content="Войти"
+            Height="36"
+            Width="140"
+            HorizontalAlignment="Center"
+            Click="LoginButton_Click"/>
+
+    </StackPanel>
+</Window>
