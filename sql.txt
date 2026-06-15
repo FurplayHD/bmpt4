@@ -1,0 +1,179 @@
+CREATE DATABASE de_bu;
+GO
+
+USE de_bu;
+GO
+
+-- =========================
+-- 1. Customers
+-- Под JSON: id, name, inn, addres, phone, salesman, buyer
+-- =========================
+
+CREATE TABLE dbo.customers
+(
+    customer_id INT IDENTITY(1,1) PRIMARY KEY,
+    json_id NVARCHAR(20) NOT NULL UNIQUE,
+    name NVARCHAR(150) NOT NULL,
+    inn NVARCHAR(20) NULL,
+    addres NVARCHAR(255) NULL,
+    phone NVARCHAR(30) NULL,
+    salesman BIT NOT NULL DEFAULT 0,
+    buyer BIT NOT NULL DEFAULT 0
+);
+GO
+
+-- =========================
+-- 2. Products
+-- =========================
+
+CREATE TABLE dbo.products
+(
+    product_id INT IDENTITY(1,1) PRIMARY KEY,
+    product_name NVARCHAR(150) NOT NULL,
+    article NVARCHAR(50) NULL UNIQUE,
+    price DECIMAL(12,2) NOT NULL DEFAULT 0 CHECK (price >= 0)
+);
+GO
+
+-- =========================
+-- 3. Materials
+-- =========================
+
+CREATE TABLE dbo.materials
+(
+    material_id INT IDENTITY(1,1) PRIMARY KEY,
+    material_name NVARCHAR(150) NOT NULL,
+    unit NVARCHAR(30) NOT NULL,
+    unit_price DECIMAL(12,2) NOT NULL CHECK (unit_price >= 0)
+);
+GO
+
+-- =========================
+-- 4. Specifications
+-- Без отдельной таблицы specification_materials
+-- Одна строка = один материал в спецификации продукции
+-- =========================
+
+CREATE TABLE dbo.specifications
+(
+    specification_id INT IDENTITY(1,1) PRIMARY KEY,
+    product_id INT NOT NULL,
+    material_id INT NOT NULL,
+    specification_name NVARCHAR(150) NOT NULL,
+    consumption_rate DECIMAL(12,3) NOT NULL CHECK (consumption_rate > 0),
+
+    FOREIGN KEY (product_id)
+        REFERENCES dbo.products(product_id),
+
+    FOREIGN KEY (material_id)
+        REFERENCES dbo.materials(material_id)
+);
+GO
+
+-- =========================
+-- 5. Orders
+-- =========================
+
+CREATE TABLE dbo.orders
+(
+    order_id INT IDENTITY(1,1) PRIMARY KEY,
+    customer_id INT NOT NULL,
+    order_date DATE NOT NULL DEFAULT GETDATE(),
+
+    FOREIGN KEY (customer_id)
+        REFERENCES dbo.customers(customer_id)
+);
+GO
+
+-- =========================
+-- 6. Order items
+-- =========================
+
+CREATE TABLE dbo.order_items
+(
+    order_item_id INT IDENTITY(1,1) PRIMARY KEY,
+    order_id INT NOT NULL,
+    product_id INT NOT NULL,
+    quantity INT NOT NULL CHECK (quantity > 0),
+
+    FOREIGN KEY (order_id)
+        REFERENCES dbo.orders(order_id),
+
+    FOREIGN KEY (product_id)
+        REFERENCES dbo.products(product_id)
+);
+GO
+
+-- =========================
+-- 7. Users
+-- Для модуля 4
+-- =========================
+
+CREATE TABLE dbo.users
+(
+    user_id INT IDENTITY(1,1) PRIMARY KEY,
+    login NVARCHAR(50) NOT NULL UNIQUE,
+    password NVARCHAR(100) NOT NULL,
+    role NVARCHAR(20) NOT NULL CHECK (role IN (N'Администратор', N'Пользователь')),
+    is_blocked BIT NOT NULL DEFAULT 0,
+    failed_attempts INT NOT NULL DEFAULT 0 CHECK (failed_attempts >= 0)
+);
+GO
+
+
+
+
+
+USE de_bu;
+GO
+
+SELECT
+    o.order_id AS order_id,
+    c.name AS customer_name,
+    o.order_date AS order_date,
+    ROUND(SUM(oi.quantity * s.consumption_rate * m.unit_price), 2) AS total_order_cost
+FROM dbo.orders AS o
+JOIN dbo.customers AS c
+    ON c.customer_id = o.customer_id
+JOIN dbo.order_items AS oi
+    ON oi.order_id = o.order_id
+JOIN dbo.products AS p
+    ON p.product_id = oi.product_id
+JOIN dbo.specifications AS s
+    ON s.product_id = p.product_id
+JOIN dbo.materials AS m
+    ON m.material_id = s.material_id
+GROUP BY
+    o.order_id,
+    c.name,
+    o.order_date
+ORDER BY
+    o.order_id;
+
+
+
+USE deьщ;
+GO
+
+INSERT INTO customers (json_id, name, inn, addres, phone, salesman, buyer)
+SELECT id, name, inn, addres, phone, salesman, buyer
+FROM OPENROWSET(
+    BULK N'C:\Users\kotlc\OneDrive\Рабочий стол\Заказчики.json',
+    SINGLE_CLOB,
+    CODEPAGE = '65001'
+) j
+CROSS APPLY OPENJSON(j.BulkColumn)
+WITH (
+    id NVARCHAR(20),
+    name NVARCHAR(150),
+    inn NVARCHAR(20),
+    addres NVARCHAR(255),
+    phone NVARCHAR(30),
+    salesman BIT,
+    buyer BIT
+);
+GO
+
+SELECT * FROM customers;
+
+
